@@ -5,13 +5,14 @@ import gym
 import time
 import numpy as np
 import tensorflow as tf
+import sys
 from collections import namedtuple
 
 np.random.seed(1)
 tf.random.set_seed(1)
 
-def test_model():
-    pass
+def eprint(*args):
+    print(*args, file=sys.stderr)
 
 
 class Model(tf.keras.Model):
@@ -95,7 +96,7 @@ class DQNAgent:
                 # make one train step
                 loss = self._train_step(opt, batch_size, gamma)
                 if step % 1000 == 0:
-                    print("step={}, loss={}".format(step, loss))
+                    eprint("step={}, loss={}".format(step, loss))
 
             if step % target_update_iter == 0:
                 self._update_target_model()
@@ -154,9 +155,11 @@ class DQNAgent:
 
 
 def train_and_evaluate(env, buffer_size, steps, batch_size, gamma, target_update_iter,
-                       learning_rate, epsilon, epsilon_decay, min_epsilon, start_learning_steps):
+                       learning_rate, epsilon, epsilon_decay, min_epsilon, start_learning_steps,
+                       rounds=10, play_after_learn=False):
     num_actions = env.action_space.n
-    rounds, reward_sum = 10, 0
+    reward_list = []
+    agent = None
     for i in range(rounds):
         tf.keras.backend.clear_session()
         model = Model(num_actions)
@@ -164,16 +167,19 @@ def train_and_evaluate(env, buffer_size, steps, batch_size, gamma, target_update
         agent = DQNAgent(model, target_model, env, buffer_size=buffer_size)
         agent.train(steps, batch_size, gamma, target_update_iter, learning_rate, epsilon,
                     epsilon_decay, min_epsilon, start_learning_steps)
-        reward = agent.evaluation(10)
-        print(reward)
-        reward_sum += reward
+        reward_list.append(agent.evaluation(10))
     print(buffer_size, steps, batch_size, gamma, target_update_iter,
           learning_rate, epsilon, epsilon_decay, start_learning_steps)
-    print("avg {} steps".format(reward_sum/rounds))
+    reward = sum(reward_list) / rounds
+    print("reward: {}".format(reward))
+    if play_after_learn:
+        agent.evalation1(render=True)
+    return reward
 
 
 if __name__ == '__main__':
     env = gym.make("CartPole-v0")
-    train_and_evaluate(env, buffer_size=100, steps=5000, batch_size=5, gamma=0.99, target_update_iter=400,
-                       learning_rate=0.0015, epsilon=0.1, epsilon_decay=0.995, min_epsilon=0.01,
-                       start_learning_steps=100)
+    train_and_evaluate(env, buffer_size=100, steps=5000, batch_size=5, gamma=0.9835, target_update_iter=400,
+                       learning_rate=0.002811, epsilon=0.1316, epsilon_decay=0.9962, min_epsilon=0.007501,
+                       start_learning_steps=100, rounds=1, play_after_learn=True)
+
