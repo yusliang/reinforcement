@@ -179,7 +179,12 @@ def train_and_evaluate(env, buffer_size, steps, batch_size, gamma, target_update
 
 if __name__ == '__main__':
     env = gym.make("CartPole-v0")
-    train_and_evaluate(env, buffer_size=100, steps=5000, batch_size=5, gamma=0.9835, target_update_iter=400,
-                       learning_rate=0.002811, epsilon=0.1316, epsilon_decay=0.9962, min_epsilon=0.007501,
-                       start_learning_steps=100, rounds=1, play_after_learn=True)
+    # train_and_evaluate(env, buffer_size=100, steps=5000, batch_size=5, gamma=0.9835, target_update_iter=400,
+    #                    learning_rate=0.002811, epsilon=0.1316, epsilon_decay=0.9962, min_epsilon=0.007501,
+    #                    start_learning_steps=100, rounds=1, play_after_learn=True)
+    tf.keras.backend.clear_session()
+    model = Model(env.action_space.n)
+    target_model = Model(env.action_space.n)
+    agent = DQNAgent(model, target_model, env, buffer_size=100)
+    print(agent.evaluation(1))
 
